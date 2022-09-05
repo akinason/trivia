@@ -10,7 +10,7 @@ class FormView extends Component {
       answer: '',
       difficulty: 1,
       category: 1,
-      categories: {},
+      categories: [{id: 1, type: 'Science'}],
     };
   }
 
@@ -19,7 +19,7 @@ class FormView extends Component {
       url: `/categories`, //TODO: update request URL
       type: 'GET',
       success: (result) => {
-        this.setState({ categories: result.categories });
+        this.setState({ categories: result.data });
         return;
       },
       error: (error) => {
@@ -40,7 +40,7 @@ class FormView extends Component {
         question: this.state.question,
         answer: this.state.answer,
         difficulty: this.state.difficulty,
-        category: this.state.category,
+        category_id: this.state.category,
       }),
       xhrFields: {
         withCredentials: true,
@@ -93,8 +93,8 @@ class FormView extends Component {
             <select name='category' onChange={this.handleChange}>
               {Object.keys(this.state.categories).map((id) => {
                 return (
-                  <option key={id} value={id}>
-                    {this.state.categories[id]}
+                  <option key={this.state.categories[id]['id']} value={this.state.categories[id]['id']}>
+                    {this.state.categories[id]['type']}
                   </option>
                 );
               })}

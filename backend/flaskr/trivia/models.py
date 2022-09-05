@@ -1,10 +1,9 @@
-import os
-from sqlalchemy import Column, String, Integer, create_engine
 from flask_sqlalchemy import SQLAlchemy
-import json
 
-database_name = 'trivia'
-database_path = 'postgresql://{}/{}'.format('localhost:5432', database_name)
+from flaskr.config import settings
+
+database_name = settings.DB_NAME
+database_path = settings.SQLALCHEMY_DATABASE_URI
 
 db = SQLAlchemy()
 
@@ -17,7 +16,28 @@ def setup_db(app, database_path=database_path):
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     db.app = app
     db.init_app(app)
-    db.create_all()
+    # db.create_all()
+
+"""
+Category
+
+"""
+class Category(db.Model):
+    __tablename__ = 'categories'
+
+    id = db.Column(db.Integer, primary_key=True)
+    type = db.Column(db.String)
+    questions = db.relationship('Question', backref='category')
+
+    def __init__(self, name):
+        self.type = name
+
+    def format(self):
+        return {
+            'id': self.id,
+            'type': self.type
+            }
+
 
 """
 Question
@@ -26,16 +46,16 @@ Question
 class Question(db.Model):
     __tablename__ = 'questions'
 
-    id = Column(Integer, primary_key=True)
-    question = Column(String)
-    answer = Column(String)
-    category = Column(String)
-    difficulty = Column(Integer)
+    id = db.Column(db.Integer, primary_key=True)
+    question = db.Column(db.String)
+    answer = db.Column(db.String)
+    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
+    difficulty = db.Column(db.Integer)
 
-    def __init__(self, question, answer, category, difficulty):
+    def __init__(self, question, answer, category_id, difficulty):
         self.question = question
         self.answer = answer
-        self.category = category
+        self.category_id = category_id
         self.difficulty = difficulty
 
     def insert(self):
@@ -54,25 +74,7 @@ class Question(db.Model):
             'id': self.id,
             'question': self.question,
             'answer': self.answer,
-            'category': self.category,
+            'category': self.category.type,
             'difficulty': self.difficulty
             }
 
-"""
-Category
-
-"""
-class Category(db.Model):
-    __tablename__ = 'categories'
-
-    id = Column(Integer, primary_key=True)
-    type = Column(String)
-
-    def __init__(self, type):
-        self.type = type
-
-    def format(self):
-        return {
-            'id': self.id,
-            'type': self.type
-            }

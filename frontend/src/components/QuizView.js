@@ -11,7 +11,7 @@ class QuizView extends Component {
       quizCategory: null,
       previousQuestions: [],
       showAnswer: false,
-      categories: {},
+      categories: [{id: 1, type: "Science"}],
       numCorrect: 0,
       currentQuestion: {},
       guess: '',
@@ -24,7 +24,7 @@ class QuizView extends Component {
       url: `/categories`, //TODO: update request URL
       type: 'GET',
       success: (result) => {
-        this.setState({ categories: result.categories });
+        this.setState({ categories: result.data });
         return;
       },
       error: (error) => {
@@ -65,9 +65,9 @@ class QuizView extends Component {
         this.setState({
           showAnswer: false,
           previousQuestions: previousQuestions,
-          currentQuestion: result.question,
+          currentQuestion: result.data,
           guess: '',
-          forceEnd: result.question ? false : true,
+          forceEnd: !result.data,
         });
         return;
       },
@@ -110,17 +110,18 @@ class QuizView extends Component {
           {Object.keys(this.state.categories).map((id) => {
             return (
               <div
-                key={id}
-                value={id}
+                key={this.state.categories[id]['id']}
+                value={this.state.categories[id]['id']}
                 className='play-category'
                 onClick={() =>
-                  this.selectCategory({ type: this.state.categories[id], id })
+                  this.selectCategory({ type: this.state.categories[id]["type"], id: this.state.categories[id]['id'] })
                 }
               >
-                {this.state.categories[id]}
+                {this.state.categories[id]['type']}
               </div>
             );
           })}
+
         </div>
       </div>
     );

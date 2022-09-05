@@ -1,102 +1,75 @@
-import os
-from flask import Flask, request, abort, jsonify
-from flask_sqlalchemy import SQLAlchemy
+from typing import Any
+from flask import Flask, jsonify
 from flask_cors import CORS
-import random
+from flaskr.trivia.models import setup_db, db
+from flask_migrate import Migrate
 
-from models import setup_db, Question, Category
 
-QUESTIONS_PER_PAGE = 10
+def format_response(data: Any, success: bool, status_code: int = 200, message: str = "") -> jsonify:
+    return jsonify({
+        "success": success,
+        "data": data,
+        "message": message,
+        "status_code": status_code
+    }), status_code
+
+
+migrate = Migrate()
 
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__)
     setup_db(app)
-
     """
     @TODO: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
     """
+    # print('database engine: ', app.db.get_engine())
+    CORS(app)
+    migrate.init_app(app, db)
 
     """
     @TODO: Use the after_request decorator to set Access-Control-Allow
     """
+    @app.after_request
+    def after_request(response):
+        response.headers['Access-Control-Allow-Methods'] =  '*'
+        response.headers['Access-Control-Allow-Origins'] = '*'
+        return response
 
     """
-    @TODO:
-    Create an endpoint to handle GET requests
-    for all available categories.
+    Error Handlers
     """
+    @app.errorhandler(400)
+    def bad_request_error(error):
+        return format_response(
+            {}, False, 400,
+            message="The request body was not properly formatted."
+        )
 
+    @app.errorhandler(404)
+    def not_found_error(error):
+        return format_response(
+            {}, False, 404,
+            message="The resource you are looking for does not exist."
+        )
 
-    """
-    @TODO:
-    Create an endpoint to handle GET requests for questions,
-    including pagination (every 10 questions).
-    This endpoint should return a list of questions,
-    number of total questions, current category, categories.
+    @app.errorhandler(405)
+    def method_not_allowed_error(error):
+        return format_response(
+            {}, False, 405,
+            message="The HTTP method used is not allowed for this route."
+        )
 
-    TEST: At this point, when you start the application
-    you should see questions and categories generated,
-    ten questions per page and pagination at the bottom of the screen for three pages.
-    Clicking on the page numbers should update the questions.
-    """
+    @app.errorhandler(422)
+    def unprocessable_entity_error(error):
+        return format_response(
+            {}, False, 422,
+            message="Unprocessable entity."
+        )
 
-    """
-    @TODO:
-    Create an endpoint to DELETE question using a question ID.
-
-    TEST: When you click the trash icon next to a question, the question will be removed.
-    This removal will persist in the database and when you refresh the page.
-    """
-
-    """
-    @TODO:
-    Create an endpoint to POST a new question,
-    which will require the question and answer text,
-    category, and difficulty score.
-
-    TEST: When you submit a question on the "Add" tab,
-    the form will clear and the question will appear at the end of the last page
-    of the questions list in the "List" tab.
-    """
-
-    """
-    @TODO:
-    Create a POST endpoint to get questions based on a search term.
-    It should return any questions for whom the search term
-    is a substring of the question.
-
-    TEST: Search by any phrase. The questions list will update to include
-    only question that include that string within their question.
-    Try using the word "title" to start.
-    """
-
-    """
-    @TODO:
-    Create a GET endpoint to get questions based on category.
-
-    TEST: In the "List" tab / main screen, clicking on one of the
-    categories in the left column will cause only questions of that
-    category to be shown.
-    """
-
-    """
-    @TODO:
-    Create a POST endpoint to get questions to play the quiz.
-    This endpoint should take category and previous question parameters
-    and return a random questions within the given category,
-    if provided, and that is not one of the previous questions.
-
-    TEST: In the "Play" tab, after a user selects "All" or a category,
-    one question at a time is displayed, the user is allowed to answer
-    and shown whether they were correct or not.
-    """
-
-    """
-    @TODO:
-    Create error handlers for all expected errors
-    including 404 and 422.
-    """
+    # Register blueprints
+    from flaskr.trivia.views import bp as trivia_bp
+    app.register_blueprint(trivia_bp)
 
     return app
 
