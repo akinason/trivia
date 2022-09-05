@@ -129,13 +129,14 @@ class TriviaTestCase(unittest.TestCase):
 
 
     def test_play_quiz_with_no_previous_question(self):
-        category_id = 1
+        category = {}
         with self.app.app_context():
-            category_id = Category.query.first().id
+            category = Question.query.order_by(self.db.func.random()).first().category.format()
 
         response = self.client().post(
             f'/quizzes',
-            json={'category_id': category_id}
+            json={'quiz_category': category},
+            headers={'Content-Type': 'application/json'}
         )
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
@@ -144,12 +145,18 @@ class TriviaTestCase(unittest.TestCase):
 
     def test_play_quiz_with_prev_question(self):
         question = {}
+        quiz_category = {}
         with self.app.app_context():
-            question = Question.query.first()
+           for cat in Category.query.all():
+               if len(cat.questions) > 1:
+                   question = cat.questions[0].format()
+                   quiz_category = cat.format()
+                   break
 
         response = self.client().post(
             f'/quizzes',
-            json={'category_id': question.category_id, 'prev_question_id': question.id}
+            json={'quiz_category': quiz_category, 'previous_questions': [question.get('id')]},
+            headers={'Content-Type': 'application/json'}
         )
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
@@ -157,14 +164,16 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(result['data'])
 
     def test_404_play_quiz_with_wrong_category(self):
-        category_id = 0
+        category = {}
         with self.app.app_context():
             category_id = Category.query.order_by(Category.id.desc()).first().id + 2
+            category = {'id': category_id, "type": ""}
 
-        response = self.client().post(f'/quiz/{category_id}/4')
+        response = self.client().post(f'/quizzes', json={'quiz_category': category})
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 404)
         self.assertFalse(result['success'])
+
     def test_404_play_quiz_with_wrong_prev_question(self):
         question = {}
         with self.app.app_context():

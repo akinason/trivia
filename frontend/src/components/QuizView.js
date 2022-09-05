@@ -72,8 +72,13 @@ class QuizView extends Component {
         return;
       },
       error: (error) => {
-        alert('Unable to load question. Please try your request again');
-        return;
+        if (this.state.previousQuestions.length > 0) {
+          alert('Your score is: ' + this.state.numCorrect);
+          return;
+        } else {
+          alert('Unable to load question. Please try your request again');
+          return;
+        }
       },
     });
   };

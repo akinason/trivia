@@ -182,11 +182,15 @@ def play_quiz_with_prev_question():
     quiz_category = request.get_json().get('quiz_category')
     previous_questions = request.get_json().get('previous_questions')
 
-    category = Category.query.filter_by(id=quiz_category.get('id')).one_or_none()
-    if category is None:
-        abort(404)
+    query = Question.query
 
-    query = Question.query.filter(Question.category_id == category.id)
+    if int(quiz_category.get('id')) != 0:
+        category = Category.query.filter_by(id=quiz_category.get('id')).one_or_none()
+        if category is None:
+            abort(404)
+
+        query = query.filter(Question.category_id == category.id)
+
     if previous_questions:
         query = query.filter(Question.id.notin_(previous_questions))
 
@@ -198,8 +202,3 @@ def play_quiz_with_prev_question():
     return format_response(question.format(), True, 200)
 
 
-"""
-@TODO:
-Create error handlers for all expected errors
-including 404 and 422.
-"""

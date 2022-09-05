@@ -67,6 +67,13 @@ def create_app(test_config=None):
             message="Unprocessable entity."
         )
 
+    @app.errorhandler(500)
+    def server_error(error):
+        return format_response(
+            {}, False, 500,
+            message="Something went wrong in the server. This is not your fault."
+        )
+
     # Register blueprints
     from flaskr.trivia.views import bp as trivia_bp
     app.register_blueprint(trivia_bp)
